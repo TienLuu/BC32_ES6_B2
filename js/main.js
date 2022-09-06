@@ -1,3 +1,4 @@
+// DATA
 let dataGlasses = [
    {
       id: "G1",
@@ -96,6 +97,7 @@ let dataGlasses = [
          "Lorem ipsum dolor sit amet consectetur adipisicing elit. Sit consequatur soluta ad aut laborum amet.",
    },
 ];
+
 // DOM
 const domByQuery = (id) => document.querySelector(id);
 
@@ -108,7 +110,7 @@ const display = (obj) => {
          result +
          `
             <div class="vglasses__items col-6 col-md-4">
-                <img src="${item.src}" alt="Glasses Img" data-id="${item.id}" class="img-fluid">
+                <img src="${item.src}" alt="Glasses Img" class="img-fluid" data-id="${item.id}">
             </div>
         `
       );
@@ -117,52 +119,78 @@ const display = (obj) => {
    domByQuery("#vglassesList").innerHTML = html;
 };
 
-// Chọn sản phẩm
-const glassesPicker = (id) => {
-   return dataGlasses.filter((item) => item.id === id);
-};
-
-// Hiển thị sản phẩm vào mẫu
-const glassesChange = (glasses) => {
-   let html = `<img src="${glasses.virtualImg}" alt="Glasses Img">`;
-   domByQuery("#avatar").innerHTML = html;
-};
-
 // Hiển thị thông tin sản phẩm
-const showInfo = (obj) => {
-   let html = obj.reduce((result, item) => {
-      return (
-         result +
-         `
-            <h3>${item.name} - ${item.brand} (${item.color})</h3>
-            <span class="badge badge-danger">$${item.price}</span>
+const displayGlassesInfo = (glasses) => {
+   let html = `
+            <h3>${glasses.name} - ${glasses.brand} (${glasses.color})</h3>
+            <span class="badge badge-danger">$${glasses.price}</span>
             <span class="text-success">Stocking</span>
-            <p>${item.description}</p>
-        `
-      );
-   }, "");
+            <p>${glasses.description}</p>
+        `;
 
    domByQuery("#glassesInfo").innerHTML = html;
 };
 
-display(dataGlasses);
+// Hiển thị kính trên mẫu
+const displayGlasses = (glasses) => {
+   const html = `<img src="${glasses.virtualImg}" alt="Glasses Img" id="${glasses.id}">`;
+   domByQuery("#avatar").innerHTML = html;
+};
 
-domByQuery("#vglassesList").addEventListener("click", function (e) {
-   // B1: DOM
+// Tìm kính theo id
+const findGlasses = (id) => dataGlasses.filter((item) => item.id === id);
+
+// Chọn kính thử
+const glassesPicker = (e) => {
    const id = e.target.getAttribute("data-id");
-   // Xử lý lỗi khi click vào vùng không có thuộc tính data-id
+   // Kiểm tra vùng click vì hình ánh sản phẩm bị lỗi (không cắt đúng kính thước)
    if (!id) {
-      domByQuery("#glassesInfo").style.display = "none";
-      domByQuery("#avatar").removeChild(domByQuery("#avatar").firstChild);
       return;
    }
+   // Tìm kính theo id
+   const glasses = findGlasses(id);
+   // UI
+   handleChangeGlasses(...glasses);
+};
 
-   // B2: Hiển thị
+// Xử lý sự kiện thay đổi kính
+const handleChangeGlasses = (glasses) => {
+   // B1: Hiển thị kính trên mẫu
+   displayGlasses(glasses);
+
+   // B2: Hiển thị thông tin kính
    domByQuery("#glassesInfo").style.display = "block";
-   // Tìm kiếm sản phẩm khi người dùng click
-   const glasses = glassesPicker(id);
-   // Gắn sản phẩm vào model
-   glassesChange(...glasses);
-   // Thông tin sản phẩm
-   showInfo(glasses);
+   displayGlassesInfo(glasses);
+};
+
+// Hiển thị danh sách sản phẩm kính
+display(dataGlasses);
+
+// Thử kính bằng click vào kính trong danh sách kính
+domByQuery("#vglassesList").addEventListener("click", glassesPicker);
+
+// Thử kính bằng btn prev, next với danh sách kính
+domByQuery(".vglasses__card").addEventListener("click", function (e) {
+   const type = e.target.getAttribute("id");
+   const imgEls = domByQuery("#avatar img");
+
+   if (!imgEls) return;
+   let currIndex = dataGlasses.findIndex((glasses) => glasses.id === imgEls.id);
+
+   if (type === "prevBtn") {
+      const prevIndex =
+         currIndex - 1 < 0 ? dataGlasses.length - 1 : currIndex - 1;
+
+      const glasses = dataGlasses[prevIndex];
+      displayGlasses(glasses);
+      displayGlassesInfo(glasses);
+   }
+   if (type === "nextBtn") {
+      const nextIndex =
+         currIndex + 1 > dataGlasses.length - 1 ? 0 : currIndex + 1;
+
+      const glasses = dataGlasses[nextIndex];
+      displayGlasses(glasses);
+      displayGlassesInfo(glasses);
+   }
 });
